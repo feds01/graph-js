@@ -66,9 +66,9 @@ class Scale {
             const precision = Math.max(1, Math.ceil(Math.abs(Math.log10(this.scaleStep))));
             
             const range = round(this.max - this.min / 10 ** precision, precision);
-            const initialTick = floor(this.min , this.scaleStep);
+            const initialTick = floor(this.min, this.scaleStep);
 
-            while (range <= round(this.scaleStep * (this.tickCount - 1) + initialTick, precision)) {
+            while (range < round(this.scaleStep * (this.tickCount - 1) + initialTick, precision)) {
                 this.tickCount -= 1;
             }
         }
@@ -92,7 +92,7 @@ class Scale {
     }
 
     generateScaleLabels() {
-        const logarithmicScaleStep = Math.log((this.scaleStep));
+        const logarithmicScaleStep = Math.log10((this.scaleStep));
         const precision = Math.abs(Math.floor(logarithmicScaleStep));
 
       
@@ -102,13 +102,7 @@ class Scale {
 
             // pass the zero, so we don't convert say '0' to '0.00'
             if (logarithmicScaleStep < 0 && scaleLabel !== 0) {
-
-                // TODO: unhandled case where we have a float that is larger than log(n) > 1
-                if (Math.log10(this.roundedMinimum) > 0) {
-                    return scaleLabel.toFixed(precision);
-                }
-
-                return scaleLabel; //.toPrecision(precision); //.slice(0, 2 + precision);
+                return scaleLabel.toFixed(precision);
             }
 
             return scaleLabel;

@@ -29,15 +29,17 @@
   <body>
     <div id="graph">
       <div class="title"></div>
-      <canvas width="12000" height="600"></canvas>
+      <canvas width="1600" height="600"></canvas>
     </div>
 
     <div>
       <p>Select local CSV File:</p>
       <input id="csv" type="file" />
     </div>
-    <script src="../dist/graphika.min.js"></script>
+    <script src="../dist/graphika.js"></script>
     <script>
+      let graph;
+
       var fileInput = document.getElementById("csv"),
         dataset = [],
         readFile = function () {
@@ -46,36 +48,45 @@
             const dataset = {
               0: reader.result
                 .split("\n")
-                .map((item) => parseFloat(item.split(",")[0])),
+                .map((item) => parseFloat(item)),
             };
 
             console.time("graph_init");
-            let graph = new Graph(
+            graph = new Graph(
               "graph",
               {
-                x_label: "X-Axis",
-                y_label: "Y-Axis",
-                title: "Long graph",
-                title_pos: "top-left",
+                x_label: "Number of elements",
+                y_label: "Time (seconds)",
+                title: "Span algorithm efficiency",
+                title_pos: "top-center",
                 grid: {
                   gridded: true,
                   sharedZero: true,
                 },
                 scale: {
-                  shorthandNumerics: true,
+                  // shorthandNumerics: true,
+                  x: {
+                    ticks: 10
+                  },
+                  y: {
+                    ticks: 10,
+                  }
+                },
+                legend: {
+                  draw: true,
                 },
               },
               [
                 {
                   style: "solid",
-                  label: "output",
+                  label: "algorithm-compute-supernumber-span",
                   interpolation: "cubic",
                   data: dataset[0],
                   annotatePoints: false,
-                  colour: Graph.Colours.FLAMINGO_PINK,
+                  colour: Graph.Colours.FLAMINGO_RED,
                   area: {
                     fill: false,
-                    colour: Graph.Colours.FLAMINGO_PINK,
+                    colour: Graph.Colours.FLAMINGO_RED,
                   },
                 },
               ]

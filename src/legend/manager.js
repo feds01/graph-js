@@ -172,7 +172,7 @@ class LegendManager {
         case LegendManager.Alignment.START:
           break; // we don't need to do anything here since we assume that it is the initial condition
         case LegendManager.Alignment.CENTER: {
-          const offset = arrays.sum(requiredSpaces.slice(0, Math.round(requiredSpaces.length / 2)));
+          const offset = arrays.sum(requiredSpaces) / 2;
 
           xBegin = this.graph.lengths.x_center - offset + LegendManager.PADDING; // we add one padding unit to account for the space between each legend
           break;

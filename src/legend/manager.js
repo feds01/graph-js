@@ -24,6 +24,9 @@ class LegendManager {
     /* Position of the legend container on the graph object */
     this.position = this.graph.options.legend.position ?? LegendManager.Pos.TOP;
 
+    // the actual legened box size
+    this.boxSize = this.graph.options.labelFontSize + 4; // 2px padding each side
+
     // check that the position is valid
     if (!Object.values(LegendManager.Pos).includes(this.position)) {
       this.position = LegendManager.Pos.TOP;
@@ -48,11 +51,11 @@ class LegendManager {
 
       this.requiredSpace = this.getRequiredSpaceFor(longestItem);
     } else {
-      this.requiredSpace = this.graph.fontSize();
+      this.requiredSpace = this.boxSize + LegendManager.PADDING;
     }
   }
 
-  static PADDING = 4;
+  static PADDING = 8;
 
   static Pos = {
     LEFT: "left",
@@ -69,9 +72,13 @@ class LegendManager {
 
   getRequiredSpaceFor(item) {
     // add add 2px padding on top and bottom
-    let size = this.graph.fontSize() + LegendManager.PADDING;
+    let size = 2 * LegendManager.PADDING + this.boxSize;
 
-    size += this.graph.ctx.measureText(item).width + LegendManager.PADDING;
+    this.graph.ctx.save();    
+    this.graph.drawer.toTextMode(12);
+
+    size += this.graph.ctx.measureText(item).width;
+    this.graph.ctx.restore();
     
     return size;
   }
@@ -93,17 +100,13 @@ class LegendManager {
 
     // set the line dash
     this.graph.ctx.setLineDash(style === "dashed" ? [4, 4] : []);
-    this.graph.ctx.strokeRect(x, y, this.graph.labelFontSize, this.graph.labelFontSize);
+    this.graph.ctx.strokeRect(x, y, this.boxSize, this.boxSize);
 
     // reduce the alpha to distinct fill between stroke
     this.graph.ctx.globalAlpha = 0.6;
 
-    this.graph.ctx.fillRect(x, y, this.graph.labelFontSize, this.graph.labelFontSize);
-
-    // move by the fontSize + 8 as the padding
-    // TODO: convert magic 12 label size to a constant
-    this.graph.drawer.text(label, x + this.graph.labelFontSize + 8, y + this.graph.labelFontSize / 2, 12, config.axisColour, "left");
-
+    this.graph.ctx.fillRect(x, y, this.boxSize, this.boxSize);
+    this.graph.drawer.text(label, x + this.boxSize + LegendManager.PADDING, y + this.boxSize / 2,this.graph.options.labelFontSize, config.axisColour, "left");
   }
 
 
@@ -113,7 +116,7 @@ class LegendManager {
   draw() {
     let orientation = "",
       xBegin = this.graph.lengths.x_begin,
-      yBegin = LegendManager.PADDING;
+      yBegin = LegendManager.PADDING + this.graph.options.title.fontSize + this.graph.padding.textPadding;
 
     switch (this.position) {
       case LegendManager.Pos.TOP:
@@ -122,7 +125,10 @@ class LegendManager {
         break;
       case LegendManager.Pos.BOTTOM: {
         orientation = "horizontal";
-        yBegin = this.graph.canvas.height - this.requiredSpace;
+
+        // offset the requiredSpace by textPadding so we avoid not having any padding
+        // between the legend and the x-axis label.
+        yBegin = this.graph.canvas.height - this.requiredSpace + this.graph.padding.textPadding;
 
         break;
       }
@@ -135,7 +141,7 @@ class LegendManager {
         break;
       case LegendManager.Pos.RIGHT: {
         orientation = "vertical";
-        xBegin = this.graph.lengths.x_end + LegendManager.PADDING * 2;
+        xBegin = this.graph.lengths.x_end + LegendManager.PADDING;
         yBegin = this.graph.lengths.y_begin;
 
         break;
@@ -151,18 +157,13 @@ class LegendManager {
 
     // pre-compute all the required space per legend
     const requiredSpaces = this.data.map((item, index) => {
-      const initial = LegendManager.PADDING * 2;
+      // add padding between each item if it's not the end item
+      const additional = index != this.data.length - 1 ? LegendManager.PADDING : 0;
       
       if (orientation == "horizontal") {
-        // add padding between each item if it's not the end item
-        const additional = index != this.data.length - 1 ? initial * 2 : 0;
-
-        return initial + this.getRequiredSpaceFor(item.label) + additional;
+        return this.getRequiredSpaceFor(item.label) + additional;
       } else {
-        // add padding between each item if it's not the end item
-        const additional = index != this.data.length - 1 ? initial : initial / 2;
-
-        return additional + this.graph.fontSize();
+        return additional + this.boxSize;
       }
     });
 
@@ -211,8 +212,8 @@ class LegendManager {
       this.graph.ctx.lineWidth = 2;
       this.graph.ctx.strokeStyle = colours.PURPLE;
 
-      const xLength = orientation === "horizontal" ? arrays.sum(requiredSpaces) : this.requiredSpace;
-      const yLength = orientation === "vertical"   ? arrays.sum(requiredSpaces) : this.requiredSpace;
+      const xLength = orientation === "horizontal" ? arrays.sum(requiredSpaces) : this.requiredSpace - LegendManager.PADDING;
+      const yLength = orientation === "vertical"   ? arrays.sum(requiredSpaces) : this.requiredSpace - LegendManager.PADDING;
 
       this.graph.ctx.strokeRect(xBegin, yBegin, xLength, yLength);
       

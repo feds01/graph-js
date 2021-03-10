@@ -22,11 +22,18 @@ const defaultConfig = {
   // general graph settings
   x_label: "",
   y_label: "",
-  title: "Graph",
-  title_pos: "top-center",
-  padding: 14,
-
   labelFont: `"Roboto Mono", monospace`,
+  labelFontSize: 12,
+
+  padding: 8,
+
+  title: {
+    content: "Graph",
+    position: "center",
+    fontFamily: "monospace",
+    fontSize: 24,
+    colour: config.axisColour,
+  },
 
   // default grid settings
   grid: {
@@ -87,12 +94,6 @@ class BasicGraph {
     dataManager;
 
      /*
-     * This is the font size of the labels, initially it is set to 0, later on it is set if
-     * the labels are not empty strings or null.
-     * */
-    labelFontSize;
-
-     /*
      * @since v0.0.1 AxisManager object is a manager class for the Axis objects of this Graph object,
      * The AxisManager contains the xAxis & yAxis objects, it also handles the synchronisation of scales &
      * negative axis modes.
@@ -110,35 +111,18 @@ class BasicGraph {
 
 
     // find canvas element and tittle element.
-    const { canvas } = utils.findObjectElements(this.id, this.options);
+    const canvas = utils.findCanvas(this.id);
 
     this.canvas = canvas;
     this.ctx = utils.setupCanvas(canvas);
 
     this.drawer = new Drawer(this.canvas, this.ctx, {labelFont: this.options.labelFont});
-    this.drawer.toTextMode(16, this.options.axisColour);
-
-
-    this.labelFontSize = 0;
-
-    // if no labels provided, they are disabled as in no room is provided
-    // for them to be drawn.
-    if (this.options.y_label !== "" && this.options.x_label !== "") {
-      this.labelFontSize = this.fontSize();
-    }
 
     this.axisManager = new AxisManager(this);
 
 
-    // check if we need to draw the legend for this graph.
-    if (this.options.legend.draw) {
-      this.legendManager = new LegendManager(this, this.dataManager.generateLegendInfo());
-    } else {
-      this.legendManager = null;
-    }
-
-    // initial padding configuration
-    this.padding = {
+     // initial padding configuration
+     this.padding = {
       top: this.options.padding,
       left: null,
       right: this.options.padding,
@@ -147,11 +131,19 @@ class BasicGraph {
       textPadding: 4,
     };
 
+    // check if we need to draw the legend for this graph.
+    if (this.options.legend.draw) {
+      this.legendManager = new LegendManager(this, this.dataManager.generateLegendInfo());
+    } else {
+      this.legendManager = null;
+    }
+
+    // now that we have determined if we are using legends, compute the padding
     this.calculatePadding();
 
     this.xLength =
       this.canvas.width -
-      (this.padding.right + this.padding.left + this.labelFontSize);
+      (this.padding.right + this.padding.left + this.options.labelFontSize);
     this.yLength =
       this.canvas.height - (this.padding.top + this.padding.bottom);
 
@@ -200,10 +192,7 @@ class BasicGraph {
     // re-draw the graph regardless if a line was found found or not
     this.draw();
 
-    assert(
-      foundLine,
-      "No line with label '" + label + "' found on this graph."
-    );
+    assert(foundLine, "No line named '" + label + "' found on this graph.");
   }
 
   /**
@@ -217,8 +206,36 @@ class BasicGraph {
     });
   }
 
+  determinePositionFromSetting(setting) {
+    if (setting === "start") {
+      return this.lengths.x_begin;
+    } else if (setting === "center") {
+      return this.lengths.x_center;
+    } else if (setting === "end") {
+      return this.lengths.x_end;
+    } else {
+      assert(false, "Positional setting did not match any of the presets");
+    }
+  }
+
   _drawLabels() {
-    if (this.labelFontSize === 0) return;
+    // draw the graph title at the specified position with font size and family specified
+    const titleOffset = this.determinePositionFromSetting(this.options.title.position);
+
+    this.ctx.save();
+
+    // add the title
+    this.drawer.text(
+      this.options.title.content,
+      titleOffset,
+      (this.options.title.fontSize + this.padding.textPadding) / 2, // so the text is vertically centered
+      this.options.title.fontSize,
+      this.options.title.colour,
+    );
+
+    this.ctx.restore();
+
+    if (this.options.labelFontSize === 0) return;
     
       let labelXOffset = 0;
       let labelYOffset = 0;
@@ -237,7 +254,7 @@ class BasicGraph {
       this.drawer.text(
         this.options.x_label,
         this.lengths.x_center,
-        this.drawer.height - ((this.fontSize() / 2) + labelXOffset),
+        this.drawer.height - ((this.fontSize() / 2) + this.padding.textPadding + labelXOffset),
         this.fontSize(),
         config.axisColour
       );
@@ -326,46 +343,54 @@ class BasicGraph {
   calculateLengths() {
     this.xLength =
       this.canvas.width -
-      (this.padding.right + this.padding.left + this.labelFontSize);
+      (this.padding.right + this.padding.left + this.options.labelFontSize);
     
     this.yLength =
       this.canvas.height -
-      (this.padding.top + this.padding.bottom + this.labelFontSize);
+      (this.padding.top + this.padding.bottom + this.options.labelFontSize);
 
     this.lengths = {
-      x_begin: this.padding.left + this.labelFontSize,
+      x_begin: this.padding.left + this.options.labelFontSize,
       y_begin: this.padding.top,
       x_end: this.drawer.width - this.padding.right,
       y_end: this.drawer.height - this.padding.bottom,
-      x_center: this.padding.left + this.labelFontSize + this.xLength / 2,
-      y_center: this.padding.top + this.labelFontSize / 2 + this.yLength / 2,
+      x_center: this.padding.left + this.options.labelFontSize + this.xLength / 2,
+      y_center: this.padding.top + this.options.labelFontSize / 2 + this.yLength / 2,
     };
   }
 
+
+  /**
+   * Calculates the padding around the graph grid, taking into account font sizes
+   * of labels, title, legends and any other parameters that could affect the size
+   * that needs to be reserved around the area.
+   *  */
   calculatePadding() {
-    const longestItem = arrays.longest(this.axisManager.joinedScaleNumbers);
+
+    // get the specified font size for title and the standard text padding so there
+    // is a gap between the graph (and maybe a legend)
+    this.padding.top += this.options.title.fontSize + this.padding.textPadding;
 
     // Set the config font size of axis labels, and then we can effectively 'measure' the width of the text
-    this.drawer.toTextMode(config.axisLabelFontSize, config.axisColour);
+    const longestItem = arrays.longest(this.axisManager.joinedScaleNumbers);
+
+    this.drawer.toTextMode(this.options.labelFontSize, config.axisColour);
     this.padding.left = Math.ceil(
-      this.options.padding + this.ctx.measureText(longestItem).width
-    );
-
-    
-    // get last label on x-axis
-    const lastItemOnXAxis = this.axisManager.xAxis.scaleLabels[this.axisManager.xAxis.scaleLabels.length - 1];
-
-    this.padding.right = Math.ceil(
-      this.options.padding + this.ctx.measureText(lastItemOnXAxis).width
-    );
-
-
+      this.options.padding + 2*this.padding.textPadding + this.ctx.measureText(longestItem).width
+    );    
+      
+    // if we don't have a legend on the right hand side of the table, we might need to add some padding
+    // to the right hand-side of the graph.
+    if (!this.options.legend.draw || this.options.legend.position !== LegendManager.Pos.RIGHT) {
+      const lastItemOnXAxis = this.axisManager.xAxis.scaleLabels[this.axisManager.xAxis.scaleLabels.length - 1];
+      this.padding.right = Math.ceil(this.ctx.measureText(lastItemOnXAxis).width);
+    }
+  
     // measure the right padding to determine if we need to add padding to
     // fit in the last scale label if it goes out of bounds.
-
     this.padding.bottom = Math.ceil(
-      this.options.padding + this.labelFontSize + this.fontSize()
-    );
+      9 + 2 * this.options.labelFontSize + 3 * this.padding.textPadding
+    ); // TODO: convert magic const '9' or the tick length into const
 
     // apply legened padding if legends are enabled
     if (this.options.legend.draw) {
@@ -415,7 +440,7 @@ class BasicGraph {
 
       this.xLength =
         this.canvas.width -
-        (this.padding.right + this.padding.left + this.labelFontSize);
+        (this.padding.right + this.padding.left + this.options.labelFontSize);
     }
 
     this.calculateLengths();
@@ -444,6 +469,17 @@ class BasicGraph {
       this.ctx.setTransform(1, 0, 0, 1, 0, 0); // reset translatation
 
       this.ctx.lineWidth = 2;
+
+      // draw box around title 
+
+      // measure text width
+      this.ctx.save();
+      this.ctx.font = `${this.options.title.fontSize}px ${this.options.title.fontFamily}`
+      const titleWidth = this.ctx.measureText(this.options.title.content).width;
+      this.ctx.restore();
+
+      this.ctx.strokeStyle = colours.PURPLE;
+      this.ctx.strokeRect(this.lengths.x_center -  titleWidth / 2, 1, titleWidth, this.options.title.fontSize);
 
       // draw canvas boundary in red
       this.ctx.strokeStyle = "red";

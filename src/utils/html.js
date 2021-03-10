@@ -1,57 +1,35 @@
 import {isUndefOrNull} from "./object";
 
 
-export function findObjectElements(id, options) {
+export function findCanvas(id) {
   let element = document.getElementById(id);
-  let elementMap = {
-    canvas: undefined,
-    title: undefined,
-  };
+  let canvas;
 
+  // find the canvas in the provided canvas
   try {
     for (let childNode of element.childNodes) {
       const tagName = childNode.nodeName.toLowerCase();
       if (tagName === "canvas") {
-        elementMap.canvas = childNode;
-      } else if (tagName === "div") {
-        if (childNode.classList.contains("title")) {
-          elementMap.title = childNode;
-        }
+        canvas = childNode;
+        break;
       }
     }
   } catch (e) {
-    if (isUndefOrNull(elementMap.canvas)) {
-      throw Error(`Graph Container with id: '${id}' doesn't exist.\n` + e);
+    if (isUndefOrNull(canvas)) {
+      throw Error(`Graph Container '${id}' doesn't exist.\n` + e);
     }
   }
 
   // DOM modifications
-  if (!isUndefOrNull(elementMap.canvas)) {
-    element.style.width = elementMap.canvas.width.toString() + "px";
+  if (!isUndefOrNull(canvas)) {
+    element.style.width = canvas.width.toString() + "px";
   } else {
     throw Error(
-      `Graph Container with id: '${id}' doesn't contain <canvas/> element.`
+      `Graph Container '${id}' doesn't contain <canvas> element.`
     );
   }
 
-  if (!isUndefOrNull(elementMap.title)) {
-    switch (options.title_pos) {
-      case "top-left":
-        elementMap.title.style.textAlign = "left";
-        break;
-      case "top-center":
-        elementMap.title.style.textAlign = "center";
-        break;
-      case "top-right":
-        elementMap.title.style.textAlign = "right";
-    }
-    elementMap.title.innerHTML = options.title;
-  } else {
-    throw Error(
-      `Graph Container with id: '${id}' doesn't contain 'title' element.`
-    );
-  }
-  return elementMap;
+  return canvas;
 }
 
 export function setupCanvas(canvas) {

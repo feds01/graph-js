@@ -11,21 +11,10 @@
             margin: 0 auto;
             font-family: "Roboto Mono", monospace;
         }
-
-        /*.graph canvas {
-            border: 1px black solid;
-        }*/
-
-        .graph > .title {
-            font-size: 28px;
-            padding-bottom: 0.3em;
-            font-family: "Roboto Mono", monospace;
-        }
     </style>
 </head>
   <body>
     <div id="graph">
-      <div class="title"></div>
       <canvas width="800" height="600"></canvas>
     </div>
 
@@ -53,7 +42,13 @@
         let graph = new Graph('graph', {
             x_label: 'X-Label',
             y_label: 'Y-Label',
-            title_pos: 'top-center',
+
+            title: {
+                content: "A Graph",
+                position: "center",
+                fontFamily: `Roboto, monospace`,
+                fontSize: 30,
+            },
             grid: {
                 gridded: true,
                 // Share zero between x & y axis' if applicable.

@@ -10,6 +10,7 @@
  * @email <alexander.fedotov.uk@gmail.com>
  */
 
+import config from "../config";
 import {assert} from "./../utils/assert";
 
 
@@ -71,7 +72,7 @@ class Drawer {
      * 
      * @returns nothing, just changes the drawing context
      * */
-    toTextMode(size, colour, alignment) {
+    toTextMode(size, colour = config.axisColour, alignment = "center") {
         this.context.strokeStyle = colour;
         this.context.fillStyle = colour;
 

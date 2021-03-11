@@ -18,7 +18,7 @@
   </head>
   <body>
     <div id="graph">
-      <canvas width="1000" height="600"></canvas>
+      <canvas width="32767" height="800"></canvas>
     </div>
 
     <div>
@@ -34,24 +34,23 @@
         readFile = function () {
           var reader = new FileReader();
           reader.onload = function () {
-            const datasets = reader.result.split("\n")
             const dataset = {
-              0: datasets[0].split(",").map((item) => parseInt(item)),
-              1: datasets[1].split(",").map((item) => parseInt(item)),
+              0: reader.result
+                .split("\n")
+                .map((item) => parseFloat(item.split(",")[0])),
             };
 
             console.time("graph_init");
             graph = new Graph(
               "graph",
               {
-                x_label: "Number of starting generators",
-                y_label: "Span size",
+                x_label: "Time (0.1s)",
+                y_label: "Voltage (V)",
 
                 debug: false,
                 title: {
-                  draw: true,
-                  content: "Algorithm efficiency trend",
-                  position: "center",
+                  content: "Nat's car project",
+                  position: "start",
                   fontFamily: `Roboto, monospace`,
                   fontSize: 28,
                 },
@@ -62,33 +61,34 @@
                 scale: {
                   // shorthandNumerics: true,
                   x: {
-                    ticks: 20
+                    ticks: 100,
+                    optimiseTicks: false,
                   },
+                  y: {
+                    ticks: 10,
+                  }
                 },
                 legend: {
                   draw: true,
                   position: "top",
-                  alignment: "center"
+                  alignment: "start"
                 },
               },
               [
                 {
                   style: "solid",
-                  label: "compute_supernumber_span",
-                  interpolation: "cubic",
+                  label: "10khz-no-capacitor",
+                  interpolation: "linear",
                   data: dataset[0],
+                  annotatePoints: false,
                   colour: Graph.Colours.FLAMINGO_RED,
-                },
-                {
-                  style: "solid",
-                  label: "span-with-cycles",
-                  interpolation: "cubic",
-                  data: dataset[1],
-                  colour: Graph.Colours.ELECTRIC_BLUE,
+                  area: {
+                    fill: false,
+                    colour: Graph.Colours.FLAMINGO_RED,
+                  },
                 },
               ]
             );
-            console.timeEnd("graph_init");
 
             graph.draw();
           };

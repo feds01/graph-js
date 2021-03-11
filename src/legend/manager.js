@@ -116,8 +116,8 @@ class LegendManager {
   draw() {
     let orientation = "",
       xBegin = this.graph.lengths.x_begin,
-      yBegin = LegendManager.PADDING + this.graph.options.title.fontSize + this.graph.padding.textPadding;
-
+      yBegin = LegendManager.PADDING + (this.graph.options.title.draw ? this.graph.options.title.fontSize + this.graph.padding.textPadding : 0);
+    
     switch (this.position) {
       case LegendManager.Pos.TOP:
         orientation = "horizontal";

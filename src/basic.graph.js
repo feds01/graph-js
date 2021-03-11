@@ -28,6 +28,7 @@ const defaultConfig = {
   padding: 8,
 
   title: {
+    draw: true,
     content: "Graph",
     position: "center",
     fontFamily: "monospace",
@@ -208,32 +209,37 @@ class BasicGraph {
 
   determinePositionFromSetting(setting) {
     if (setting === "start") {
-      return this.lengths.x_begin;
+      return {offset: this.lengths.x_begin, alignement: "left"};
     } else if (setting === "center") {
-      return this.lengths.x_center;
+      return {offset: this.lengths.x_center, alignment: "center"};
     } else if (setting === "end") {
-      return this.lengths.x_end;
+      return {offset: this.lengths.x_end, alignment: "right"};
     } else {
       assert(false, "Positional setting did not match any of the presets");
     }
   }
 
   _drawLabels() {
-    // draw the graph title at the specified position with font size and family specified
-    const titleOffset = this.determinePositionFromSetting(this.options.title.position);
 
-    this.ctx.save();
 
-    // add the title
-    this.drawer.text(
-      this.options.title.content,
-      titleOffset,
-      (this.options.title.fontSize + this.padding.textPadding) / 2, // so the text is vertically centered
-      this.options.title.fontSize,
-      this.options.title.colour,
-    );
+    if (this.options.title.draw) {
+      // draw the graph title at the specified position with font size and family specified
+      const {offset, alignment} = this.determinePositionFromSetting(this.options.title.position);
 
-    this.ctx.restore();
+      this.ctx.save();
+
+      // add the title
+      this.drawer.text(
+        this.options.title.content,
+        offset,
+        (this.options.title.fontSize + this.padding.textPadding) / 2, // so the text is vertically centered
+        this.options.title.fontSize,
+        this.options.title.colour,
+        alignment
+      );
+
+      this.ctx.restore();
+    }
 
     if (this.options.labelFontSize === 0) return;
     
@@ -369,14 +375,14 @@ class BasicGraph {
 
     // get the specified font size for title and the standard text padding so there
     // is a gap between the graph (and maybe a legend)
-    this.padding.top += this.options.title.fontSize + this.padding.textPadding;
+    this.padding.top += this.options.title.draw ? this.options.title.fontSize + this.padding.textPadding : 0;
 
     // Set the config font size of axis labels, and then we can effectively 'measure' the width of the text
     const longestItem = arrays.longest(this.axisManager.joinedScaleNumbers);
 
     this.drawer.toTextMode(this.options.labelFontSize, config.axisColour);
     this.padding.left = Math.ceil(
-      this.options.padding + 2*this.padding.textPadding + this.ctx.measureText(longestItem).width
+      this.options.padding + 9 + 3*this.padding.textPadding + this.ctx.measureText(longestItem).width
     );    
       
     // if we don't have a legend on the right hand side of the table, we might need to add some padding
@@ -471,16 +477,16 @@ class BasicGraph {
       this.ctx.lineWidth = 2;
 
       // draw box around title 
+      if (this.options.title.draw) {
+        this.ctx.save();
+        this.ctx.font = `${this.options.title.fontSize}px ${this.options.title.fontFamily}`
+        const titleWidth = this.ctx.measureText(this.options.title.content).width;
+        this.ctx.restore();
 
-      // measure text width
-      this.ctx.save();
-      this.ctx.font = `${this.options.title.fontSize}px ${this.options.title.fontFamily}`
-      const titleWidth = this.ctx.measureText(this.options.title.content).width;
-      this.ctx.restore();
-
-      this.ctx.strokeStyle = colours.PURPLE;
-      this.ctx.strokeRect(this.lengths.x_center -  titleWidth / 2, 1, titleWidth, this.options.title.fontSize);
-
+        this.ctx.strokeStyle = colours.PURPLE;
+        this.ctx.strokeRect(this.lengths.x_center -  titleWidth / 2, 1, titleWidth, this.options.title.fontSize);
+  
+      }
       // draw canvas boundary in red
       this.ctx.strokeStyle = "red";
       this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);

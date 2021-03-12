@@ -319,28 +319,13 @@ class BasicGraph {
 
   _drawData() {
     for (let lineData of this.dataManager.get()) {
-      const {
-        style,
-        area,
-        colour,
-        interpolation,
-        label,
-        annotatePoints,
-      } = lineData;
-
+     
       // don't even init the line if no data is supplied
       if (
         lineData.data.constructor === Float64Array &&
         lineData.data.length > 0
       ) {
-        let line = new Line(lineData.data, this, {
-          style,
-          area,
-          colour,
-          interpolation,
-          label,
-          annotatePoints,
-        });
+        let line = new Line(lineData.data, this, lineData);
 
         line.draw();
       }

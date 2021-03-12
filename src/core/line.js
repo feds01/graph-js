@@ -300,7 +300,7 @@ class Line {
       this.points.forEach((point, index) => {
         if (
           index == this.points.length - 1 ||
-          (point.data.x / this.graph.axisManager.xAxisTickStep) % 1 === 0) 
+          (point.data.x / this.graph.axisManager.xAxis.scaleStep) % 1 === 0) 
         {
           point.draw();
         }

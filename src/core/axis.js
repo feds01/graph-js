@@ -43,7 +43,7 @@ class Axis {
     assert(this.options.ticks > 0, `${this.type} cannot have zero or negative tick count`);
 
     this._computeAxisScale();
-    this.generateScaleNumbers();
+    this.scaleLabels = this.generateScaleNumbers();
   }
 
   /**
@@ -152,7 +152,7 @@ class Axis {
   }
 
   generateScaleNumbers() {
-    this.scaleLabels = [];
+    let scaleLabels = [];
 
     if (this.type === AxisType.X_AXIS) {
 
@@ -164,40 +164,53 @@ class Axis {
       if (Array.isArray(this.options.tickLabels) && this.options.drawLabels) {
         assert(this.options.tickLabels.length > 0);
 
-        this.scaleLabels = this.positveScale.getScaleLabels().map((_, index) => {
+        scaleLabels = this.positveScale.getScaleLabels().map((_, index) => {
             return this.options.tickLabels[index % this.options.tickLabels.length];
         });
       } else {
-        this.scaleLabels = arrays
+        scaleLabels = arrays
           .fillRange(this.positveScale.getTickCount() + 1)
           .map((x) => (this.positveScale.scaleStep * x).toString());
       }
     } else {
       if (this.manager.negativeScale) {
-        this.scaleLabels = this.negativeScale.getScaleLabels(true, true);
+        scaleLabels = this.negativeScale.getScaleLabels(true, true);
 
         // check if 0 & -0 exist, if so remove the negative 0
         if (
-          this.scaleLabels[this.scaleLabels.length - 1] === "0" &&
+          scaleLabels[scaleLabels.length - 1] === "0" &&
           this.positveScale.getScaleLabels().includes("0")
         ) {
-          this.scaleLabels.pop();
+          scaleLabels.pop();
         }
 
-        this.scaleLabels = [
-          ...this.scaleLabels,
+        scaleLabels = [
+          ...scaleLabels,
           ...this.positveScale.getScaleLabels(),
         ];
       } else {
-        this.scaleLabels = this.positveScale.getScaleLabels();
+        scaleLabels = this.positveScale.getScaleLabels();
       }
     }
+
+    return scaleLabels;
   }
 
-  // @Cleanup: There must be some cleaner way to get this value, maybe using
-  // AxisManager store this value.
-  get yStartingPosition() {
-    return this.yStart;
+  getScaleLabels() {
+    let scaleNumericsToDraw = this.generateScaleNumbers();
+
+    if (this.graph.options.scale.shorthandNumerics) {
+      scaleNumericsToDraw = scaleNumericsToDraw.map((numeric) => {
+        // TODO: unhandled case where we have a float that is larger than log(n) > 1
+        if (Number.isInteger(parseFloat(numeric))) {
+          return conversions.convertFromNumerical(numeric);
+        } else {
+          return numeric;
+        }
+      });
+    }
+
+    return scaleNumericsToDraw;
   }
 
   draw() {
@@ -210,19 +223,7 @@ class Axis {
     this.graph.ctx.strokeStyle = rgba(this.options.axisColour, 60);
 
     // Apply numerical conversion magic.
-    // TODO: add configuration for exactly which axis' should use these conversions.
-    let scaleNumericsToDraw = this.scaleLabels;
-
-    if (this.graph.options.scale.shorthandNumerics) {
-      scaleNumericsToDraw = scaleNumericsToDraw.map((numeric) => {
-        // TODO: unhandled case where we have a float that is larger than log(n) > 1
-        if (Number.isInteger(parseFloat(numeric))) {
-          return conversions.convertFromNumerical(numeric);
-        } else {
-          return numeric;
-        }
-      });
-    }
+    let scaleNumericsToDraw = this.getScaleLabels();
 
     // Y-Axis Drawing !
     if (this.type === AxisType.Y_AXIS) {

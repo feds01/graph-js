@@ -42,23 +42,19 @@ class Point {
         assert(this.graph !== undefined, "Point class must be provided with the relevant graph.");
 
         // calculate actual graphical coordinates
-        let yScalar = (data.y - this.manager.yAxis.start) / this.manager.yAxisTickStep;
-        let xScalar = data.x / this.manager.xAxisTickStep;
+        let yScalar = (data.y - this.manager.yAxis.start) / this.manager.yAxis.scaleStep;
+        let xScalar = data.x / this.manager.xAxis.scaleStep;
 
-        /*
         // Work out fraction between the data 'x' and the longest data length. Then multiply it by the available
         // graph canvas length to get a 'ratio' of the length and then add the 'x_begin' value to counter for the
         // axis offset.
-        */
         this.x = graph.lengths.x_begin + (xScalar * graph.gridRectSize.x);
-
-        /*
+        
         // Get the ratio of the actual 'y' data value, divide it by the Y-Axis tick step and multiply it by the
-        // Y square size. Negate the worked out value from the graph 'yStartingPosition' because the yStartingPosition
-        // is not always at the 'y' beelining of the graph, this is due to the graph possibly containing negative
+        // Y square size. Negate the worked out value from the graph 'yStart' because the yStart
+        // is not always at the 'y' begining of the graph, this is due to the graph possibly containing negative
         // numbers, and therefore the graph must adjust the position of the Y-Axis.
-        */
-        this.y = this.manager.xAxis.yStartingPosition - (yScalar * graph.gridRectSize.y);
+        this.y = this.manager.xAxis.yStart - (yScalar * graph.gridRectSize.y);
     }
 
     /**

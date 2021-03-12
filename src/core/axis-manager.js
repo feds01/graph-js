@@ -17,8 +17,7 @@ class AxisManager {
         this.data = graph.dataManager.join();
 
         // Does the data contain any negative values, if so enable negative axis.
-        // TODO: Array.some
-        this.negativeScale = arrays.negativeValues(this.data).length > 0;
+        this.negativeScale = this.data.some((item) => item < 0);
 
         // initialise the y-axis & x-axis
         this.yAxis = new Axis(this, AxisType.Y_AXIS, this.graph.options.scale.y);
@@ -41,36 +40,12 @@ class AxisManager {
         }
     }
 
-    get xAxisTickStep() {
-        return this.xAxis.scaleStep;
-    }
-
-    get yAxisTickStep() {
-        return this.yAxis.scaleStep;
-    }
-
-    get xAxisYStart() {
-        return this.xAxis.yStart;
-    }
-
-    get yAxisScaleNumbers() {
-        return this.yAxis.scaleLabels;
-    }
-
-    get xAxisScaleNumbers() {
-        return this.xAxis.scaleLabels;
-    }
-
     get xAxisTickCount() {
         return this.xAxis.scaleLabels.length;
     }
 
     get yAxisTickCount() {
         return this.yAxis.scaleLabels.length;
-    }
-
-    get joinedScaleNumbers() {
-        return [...this.scaleNumbers.x, ...this.scaleNumbers.y];
     }
 
     /**

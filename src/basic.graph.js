@@ -152,8 +152,8 @@ class BasicGraph {
     // iteration. Having an extra pole will make the square size less than it should be, We're
     // actually only really concerned about how many 'gaps' there are between each item
     this.gridRectSize = {
-      x: this.xLength / (this.axisManager.xAxisScaleNumbers.length - 1),
-      y: this.yLength / (this.axisManager.yAxisScaleNumbers.length - 1),
+      x: this.xLength / (this.axisManager.xAxis.scaleLabels.length - 1),
+      y: this.yLength / (this.axisManager.yAxis.scaleLabels.length - 1),
     };
 
     // if 'strict' grid mode is enabled, we select the smallest grid size out of x and y
@@ -255,7 +255,7 @@ class BasicGraph {
       if (this.options.legend.draw && this.legendManager.position == LegendManager.Pos.LEFT) {
         labelYOffset = this.legendManager.requiredSpace;
       }
-    
+
       // add x-axis label
       this.drawer.text(
         this.options.x_label,
@@ -270,6 +270,7 @@ class BasicGraph {
       this.ctx.translate(this.fontSize() + labelYOffset, this.lengths.y_center);
       this.ctx.rotate(-Math.PI / 2);
       this.ctx.fillText(this.options.y_label, 0, 0);
+
       this.ctx.restore();
   }
 
@@ -302,7 +303,7 @@ class BasicGraph {
       }
 
       // The Y-Axis drawing
-      if (offset < this.axisManager.yAxisScaleNumbers.length) {
+      if (offset < this.axisManager.yAxis.scaleLabels.length) {
         let y_offset = offset * this.gridRectSize.y;
 
         this.drawer.horizontalLine(
@@ -378,7 +379,7 @@ class BasicGraph {
     this.padding.top += this.options.title.draw ? this.options.title.fontSize + this.padding.textPadding : 0;
 
     // Set the config font size of axis labels, and then we can effectively 'measure' the width of the text
-    const longestItem = arrays.longest(this.axisManager.joinedScaleNumbers);
+    const longestItem = arrays.longest(this.axisManager.yAxis.getScaleLabels());
 
     this.drawer.toTextMode(this.options.labelFontSize, config.axisColour);
     this.padding.left = Math.ceil(
@@ -419,7 +420,7 @@ class BasicGraph {
     // optimise x-square-size if float
     if (this.options.grid.optimiseSquareSize && this.gridRectSize.x % 1 !== 0) {
       let preferredSquareSize = Math.round(this.gridRectSize.x);
-      let numberOfSquares = this.axisManager.xAxisScaleNumbers.length - 1;
+      let numberOfSquares = this.axisManager.xAxis.scaleLabels.length - 1;
 
       // If the square size was some round up, rather than down, we need to check if
       // we can actually apply the 'scale' up with the padding space available to the right
@@ -452,7 +453,7 @@ class BasicGraph {
     this.calculateLengths();
 
     // TODO: this should be used as a general form for the Y-Axis length of the graph.
-    this.yLength = (this.axisManager.yAxisScaleNumbers.length - 1) * this.gridRectSize.y;
+    this.yLength = (this.axisManager.yAxis.scaleLabels.length - 1) * this.gridRectSize.y;
 
     /* Draw our Axis', including negative scales & scale labels */
     this.axisManager.draw();
